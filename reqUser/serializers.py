@@ -13,3 +13,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         return User.objects.create_user(username=str(validated_data["first_name"]) + str(validated_data["last_name"]),**validated_data)
     
 
+
+class LoginSerializer(serializers.ModelSerializer):
+    password=serializers.CharField(max_length=120,min_length=6,write_only=True)
+    class Meta():
+        model=User
+        fields=('email','password','token')
+        read_only_fields=['token']
+
+        
