@@ -22,3 +22,9 @@ class LoginSerializer(serializers.ModelSerializer):
         read_only_fields=['token']
 
         
+
+
+class UsersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields=('username','email',"first_name","last_name","allergies","diseases","weight","weight","height","age","profile_pic")
