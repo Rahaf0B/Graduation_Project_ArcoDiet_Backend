@@ -23,7 +23,7 @@ class MyUserManager(UserManager):
             raise ValueError("The given username must be set")
 
         if not email:
-            raise ValueError("The given eamil must be set")
+            raise ValueError("The given email must be set")
         email = self.normalize_email(email)
         GlobalUserModel = apps.get_model(
             self.model._meta.app_label, self.model._meta.object_name
@@ -44,7 +44,6 @@ class MyUserManager(UserManager):
     def create_superuser(self,username, email, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
-
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
@@ -54,6 +53,30 @@ class MyUserManager(UserManager):
 
 
 
+
+
+class Allergies(models.Model):
+   
+    allergies_id = models.AutoField(primary_key=True)
+    allergies_name=models.CharField(_("allergies_name"), max_length=150, blank=True,null=True)
+    
+    
+    def __str__(self):
+        return self.allergies_name
+
+class Diseases(models.Model):
+    
+    diseases_id = models.AutoField(primary_key=True)
+    diseases_name=models.CharField(_("diseases_name"), max_length=150, blank=True,null=True)
+
+    def __str__(self):
+        return self.diseases_name
+    
+
+
+def upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
 class User(AbstractBaseUser,PermissionsMixin,models.Model):
     username_validator = UnicodeUsernameValidator()   
     username=models.CharField(
@@ -61,17 +84,19 @@ class User(AbstractBaseUser,PermissionsMixin,models.Model):
         max_length=150,
         validators=[username_validator]
     )
+    user_id = models.AutoField(primary_key=True)
     first_name = models.CharField(_("first name"), max_length=150, blank=True,null=True)
     last_name = models.CharField(_("last name"), max_length=150, blank=True,null=True)
-    allergies=models.CharField(_("allergies"), max_length=150, blank=True,null=True)
-    diseases=models.CharField(_("diseases"), max_length=150, blank=True,null=True)
+    gender = models.CharField(_("gender"), max_length=5, blank=True,null=True)
+    allergies=models.ManyToManyField(Allergies,blank=True,null=True)
+    diseases=models.ManyToManyField(Diseases,blank=True,null=True)
     weight=models.FloatField(_("weight"),blank=True,null=True)
     height=models.FloatField(_("height"),blank=True,null=True)
     email = models.EmailField(_("email address"), blank=False,unique=True,null=True)
     created_at=models.DateTimeField(auto_now_add=True,null=True)
     updated_at=models.DateTimeField(auto_now=True,null=True)
     age=models.IntegerField(blank=True,null=True)
-    profile_pic=models.ImageField(upload_to='image',blank=True,null=True)
+    profile_pic=models.ImageField(upload_to='images/',blank=True,null=True)
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -98,21 +123,27 @@ class User(AbstractBaseUser,PermissionsMixin,models.Model):
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name","last_name","allergies","diseases","weight","weight","height","age"]
+    REQUIRED_FIELDS = ["username","first_name","last_name","gender","weight","height","age"]
 
 
     
     def save(self,*args,**kwargs):
-        self.username = str(self.first_name) + str(self.last_name)
-        super().save(*args , **kwargs)
+            if not self.username:
+                self.username = str(self.first_name) + str(self.last_name)
+            super().save(*args , **kwargs)
+
+    
+    def __str__(self):
+
+        return self.username
 
 
     @property
     def token(self):
-        token=jwt.encode({'email':self.email,'exp':datetime.utcnow()+ timedelta(hours=24)},
+        
+        token=jwt.encode({'email':self.email,'exp':datetime.utcnow()+ timedelta(days=30)},
                          settings.SECRET_KEY,algorithm='HS256')
     
 
         return token
-
 
