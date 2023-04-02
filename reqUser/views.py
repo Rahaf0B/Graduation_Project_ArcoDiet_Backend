@@ -1,36 +1,49 @@
 from django.shortcuts import render
 from rest_framework.generics import GenericAPIView
-from .serializers import RegisterSerializer,LoginSerializer,UsersSerializer,AllergiesDiseasesSerializer,AddInformationSerializer,AddDiseasesSerializer,AddAllergiesSerializer,UserIDSerializer
+from .serializers import RegisterReqUserSerializer,LoginSerializer,UserDataSerializer,AllergiesDiseasesSerializer,AddInformationSerializer,AddDiseasesSerializer,AddAllergiesSerializer,UserIDSerializer,RegisterNutritionistSerializer,NutritionistDataSerializer
 from rest_framework import response,status,permissions
 from django.contrib.auth import authenticate
 from .jwt import JWTAuthentication
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import User,Diseases,Allergies
+from .models import User,Diseases,Allergies,reqUser,Nutritionist
 from rest_framework import viewsets
+from rest_framework.permissions import AllowAny
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework import generics
-
 
 # Create your views here.
 
 
-class RegisterAPIView(GenericAPIView):
-    serializer_class=RegisterSerializer
-    parser_classes = (MultiPartParser, FormParser)    
+class RegisterReqUserAPIView(GenericAPIView):
+    serializer_class=RegisterReqUserSerializer
+    parser_classes = (MultiPartParser, FormParser)
     def post(self,request):
         serializer=self.serializer_class(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return response.Response(serializer.data,status=status.HTTP_201_CREATED)
-    
+        
         return response.Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
     
 
 
 
+class RegisterNutritionistUserAPIView(GenericAPIView):
+    serializer_class=RegisterNutritionistSerializer
+    parser_classes = (MultiPartParser, FormParser)
+    def post(self,request):
+        serializer=self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return response.Response(serializer.data,status=status.HTTP_201_CREATED)
+        
+        return response.Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class AddInformationAPIView(generics.UpdateAPIView):
      
-    queryset = User.objects.all()
+    queryset = reqUser.objects.all()
     serializer_class=AddInformationSerializer
     permission_classes=((permissions.IsAuthenticated,))
     authentication_classes=[JWTAuthentication]
@@ -39,16 +52,11 @@ class AddInformationAPIView(generics.UpdateAPIView):
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
         serializer=self.serializer_class(instance,data=request.data,partial=True)
-        
         if serializer.is_valid():
             serializer.save()
             return response.Response(serializer.data,status=status.HTTP_201_CREATED)
         
         return response.Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
 
 class LoginAPIView(GenericAPIView):
 
@@ -67,15 +75,28 @@ class LoginAPIView(GenericAPIView):
 class AuthUserAPIView(GenericAPIView):
     permission_classes=((permissions.IsAuthenticated,))
     authentication_classes=[JWTAuthentication]
-    serializer_class=UsersSerializer
+    serializer_class=UserDataSerializer
+
     def get(self,request):
         user=request.user
-
-        serializer=UsersSerializer(user)
+        requ=reqUser.objects.get(user=user)
+        serializer=UserDataSerializer(requ)
         
         return response.Response({'user':serializer.data})
+    
+class AuthNutritionistAPIView(GenericAPIView):
+    permission_classes=((permissions.IsAuthenticated,))
+    authentication_classes=[JWTAuthentication]
+    serializer_class=NutritionistDataSerializer
 
-
+    def get(self,request):
+        user=request.user
+        NutritionistUser=Nutritionist.objects.get(user=user)
+        serializer=NutritionistDataSerializer(NutritionistUser)
+        print(serializer.data)
+        
+        return response.Response({'user':serializer.data})
+    
 
 class GetUserIDAPIView(GenericAPIView):
     
@@ -85,11 +106,23 @@ class GetUserIDAPIView(GenericAPIView):
 
     def get(self,request):
         user=request.user
+        print(user)
         serializer=UserIDSerializer(user)
         return response.Response({'user_id':serializer.data})
 
 
 
+class AlergiesDiseasesAPIView(GenericAPIView):
+
+    authentication_classes=[]
+    serializer_class=AllergiesDiseasesSerializer
+
+    def get(self,request):
+        email=request.data.get('email',None)
+        user=request.user
+        serializer=AllergiesDiseasesSerializer(user)
+        return response.Response({'user':serializer.data})
+    
 
 
 class AddAllergiesAPIView(GenericAPIView):
@@ -116,6 +149,7 @@ class AddDiseasesAPIView(GenericAPIView):
 
 
 class getAllergiesAPIView(GenericAPIView):
+    queryset = Allergies.objects.all()
     serializer_class=AddAllergiesSerializer
     def get(self,request):
         queryset=Allergies.objects.all()
@@ -124,15 +158,12 @@ class getAllergiesAPIView(GenericAPIView):
        
 
 
-
 class getAllDiseasesAPIView(GenericAPIView):
+    queryset = Diseases.objects.all()
     serializer_class=AddDiseasesSerializer
     def get(self,request):
         queryset=Diseases.objects.all()
         serializer = AddDiseasesSerializer(queryset,many=True)
         return response.Response(serializer.data)
-
-
-
 
 

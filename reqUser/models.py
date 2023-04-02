@@ -31,7 +31,7 @@ class MyUserManager(UserManager):
                 
         
         username = GlobalUserModel.normalize_username(username)
-        user = self.model( email=email, **extra_fields)
+        user = self.model(username=username, email=email, **extra_fields)
         user.password = make_password(password)
         user.save(using=self._db)
         return user
@@ -77,26 +77,28 @@ class Diseases(models.Model):
 def upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
 
+
+
+
+
+
+
 class User(AbstractBaseUser,PermissionsMixin,models.Model):
+   
+    user_id = models.AutoField(primary_key=True)
+
     username_validator = UnicodeUsernameValidator()   
     username=models.CharField(
         _('username'),
         max_length=150,
         validators=[username_validator]
     )
-    user_id = models.AutoField(primary_key=True)
-    first_name = models.CharField(_("first name"), max_length=150, blank=True,null=True)
-    last_name = models.CharField(_("last name"), max_length=150, blank=True,null=True)
-    gender = models.CharField(_("gender"), max_length=5, blank=True,null=True)
-    allergies=models.ManyToManyField(Allergies,blank=True,null=True)
-    diseases=models.ManyToManyField(Diseases,blank=True,null=True)
-    weight=models.FloatField(_("weight"),blank=True,null=True)
-    height=models.FloatField(_("height"),blank=True,null=True)
-    email = models.EmailField(_("email address"), blank=False,unique=True,null=True)
-    created_at=models.DateTimeField(auto_now_add=True,null=True)
-    updated_at=models.DateTimeField(auto_now=True,null=True)
-    age=models.IntegerField(blank=True,null=True)
-    profile_pic=models.ImageField(upload_to='images/',blank=True,null=True)
+   
+  
+   
+    is_reqUser=models.BooleanField(default=False)
+    is_Nutritionist=models.BooleanField(default=False)
+    
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -111,31 +113,14 @@ class User(AbstractBaseUser,PermissionsMixin,models.Model):
         ),
     )
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
-    email_verified= models.BooleanField(
-        _("email_verified"),
-        default=False,
-        help_text=_(
-            "Designates whether this users email verfied"
-        
-        ),
-    )
-    objects = MyUserManager()
+    email = models.EmailField(_("email address"), blank=False,unique=True,null=True)
 
+    objects = MyUserManager()
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["username","first_name","last_name","gender","weight","height","age"]
+    REQUIRED_FIELDS = ["username"]
 
 
-    
-    def save(self,*args,**kwargs):
-            if not self.username:
-                self.username = str(self.first_name) + str(self.last_name)
-            super().save(*args , **kwargs)
-
-    
-    def __str__(self):
-
-        return self.username
 
 
     @property
@@ -147,3 +132,67 @@ class User(AbstractBaseUser,PermissionsMixin,models.Model):
 
         return token
 
+
+  
+         
+    def __str__(self):
+
+        return str(self.username)
+
+    
+   
+
+
+
+class reqUser(models.Model):
+
+    user = models.OneToOneField(User,on_delete=models.CASCADE,primary_key=True, related_name="reqUser")
+
+    req_user_first_name=models.CharField(_("req_user_first_name"), max_length=150, blank=True,null=True)
+    req_user_last_name=models.CharField(_("req_user_last_name"), max_length=150, blank=True,null=True)
+    gender = models.CharField(_("gender"), max_length=5, blank=True,null=True)
+    allergies=models.ManyToManyField(Allergies,blank=True,null=True, related_name="Allergies")
+    diseases=models.ManyToManyField(Diseases,blank=True,null=True, related_name="Disease")
+    weight=models.FloatField(_("weight"),blank=True,null=True)
+    height=models.FloatField(_("height"),blank=True,null=True)
+    created_at=models.DateTimeField(auto_now_add=True,null=True)
+    updated_at=models.DateTimeField(auto_now=True,null=True)
+    age=models.IntegerField(blank=True,null=True)
+    profile_pic=models.ImageField(upload_to='images/',blank=True,null=True)
+    REQUIRED_FIELDS = ["req_user_first_name","req_user_last_name","gender","weight","height","age"]
+
+  
+  
+    
+    def __str__(self):
+
+        return str(self.req_user_first_name) + " "+ str(self.req_user_last_name)
+
+    
+
+   
+
+
+class Nutritionist(models.Model):
+    user = models.OneToOneField(User,on_delete=models.CASCADE,primary_key=True, related_name="Nutritionist")
+
+    nutritionist_first_name=models.CharField(_("nutritionist_last_name"), max_length=150, blank=True,null=True)
+    nutritionist_last_name=models.CharField(_("nutritionist_first_name"), max_length=150, blank=True,null=True)
+    gender = models.CharField(_("gender"), max_length=5, blank=True,null=True)
+    created_at=models.DateTimeField(auto_now_add=True,null=True)
+    updated_at=models.DateTimeField(auto_now=True,null=True)
+    age=models.IntegerField(blank=True,null=True)
+    phone_number=models.IntegerField(blank=True,null=True)
+    profile_pic=models.ImageField(upload_to='images/',blank=True,null=True)
+    REQUIRED_FIELDS = ["nutritionist_first_name","nutritionist_last_name","gender","age","phone_number"]
+
+    
+
+
+  
+    
+    def __str__(self):
+
+        return str(self.nutritionist_first_name) + " "+ str(self.nutritionist_last_name)
+
+    
