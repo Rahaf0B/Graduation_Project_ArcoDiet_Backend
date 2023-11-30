@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
 
+from django.conf.locale.ar import formats as es_formats
 import os
 from pathlib import Path
 
@@ -17,18 +18,18 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
-
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-u3t!rxkhm2nb0(_99=^$#*_lx(=!_ms$vp#!t73l#(6dg(&@q)'
+SECRET_KEY = ''
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['172.19.1.150', '192.168.1.2', '192.168.1.3', '192.168.1.8', '192.168.1.6',
+                 'localhost', '127.0.0.1', '172.19.28.110', '192.168.1.7', '172.24.32.1', '192.168.1.8', '192.168.1.5']
 
-AUTH_USER_MODEL="reqUser.User"
+
+AUTH_USER_MODEL = "reqUser.User"
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -41,7 +42,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'reqUser',
     'corsheaders',
-
+    'channels',
+    'chatAPI',
+    'Appointment',
+    'product'
 ]
 
 MIDDLEWARE = [
@@ -73,10 +77,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'ArcoDiet.wsgi.application'
+ASGI_APPLICATION = 'ArcoDiet.asgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -85,9 +87,13 @@ DATABASES = {
     }
 }
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'MIDDLEWARE': ['chatAPI.jwtAuth.JWTAuthMiddleware'] + ['channels.auth.AuthMiddlewareStack'],
+    }
+}
 
-# Password validation
-# https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -105,28 +111,36 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.1/topics/i18n/
+REST_FRAMEWORK = {
+    'TIME_FORMAT': '%I:%M %p',
+
+}
+
+
+MEDIA_URL = '/media/'
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 
 LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'Etc/GMT+3'
 
-TIME_ZONE = 'UTC'
+es_formats.TIME_FORMAT = "H:i:s"
+
 
 USE_I18N = True
 
 USE_TZ = True
 
-MEDIA_URL = '/media/'
-
-MEDIA_ROOT = os.path.join(BASE_DIR,'media')
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
